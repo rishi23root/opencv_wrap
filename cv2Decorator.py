@@ -1,8 +1,11 @@
 # cv2Decorator.py
+from os import path
 import cv2
 import time
 from time import sleep as nap
 from functools import wraps
+import traceback
+from pathlib import Path
 
 class cv2Decorator:
     def TotalTimeTaken(show = False):
@@ -56,16 +59,23 @@ class cv2Decorator:
                         __class__.previousTime = currentTime
 
                     # get the image_size and put the text at right top
-                    shape = img.shape
-                    cv2.putText(
-                        img,
-                        f'FPS:{str(int(fps)).rjust(3)}', 
-                        org =org , 
-                        fontFace =font,
-                        fontScale = fontScale , 
-                        color =color,
-                        thickness =thickness )
-                return img
+                    try :
+                        shape = img.shape
+                        cv2.putText(
+                            img,
+                            f'FPS:{str(int(fps)).rjust(3)}', 
+                            org =org , 
+                            fontFace =font,
+                            fontScale = fontScale , 
+                            color =color,
+                            thickness =thickness )
+                    except :
+                        pass
+                    finally : 
+                        return img
+                else :
+                    return img
+
             return wrapper
         return inner_wrapper
 
@@ -154,15 +164,16 @@ class cv2Decorator:
                             raise Exception("Error in reading the Frame")
 
                 except Exception as e :
-                    print(getattr(e, 'message', repr(e)))
-                    print(getattr(e, 'message', str(e)))
+                    print(traceback.format_exc())
+                    # print(getattr(e, 'message', repr(e)))
+                    # print(getattr(e, 'message', str(e)))
                 finally:
                     cap.release()
                     cv2.destroyAllWindows()
             return wrapper
         return inner_wrapper
 
-    # hand detection form 
+    # with specific detector 
     def ReadCamAddDetectShowFrames(
                     detector = (None,),
                     idCam = 0,
@@ -217,8 +228,69 @@ class cv2Decorator:
                             raise Exception("Error in reading the Frame")
 
                 except Exception as e :
-                    print(getattr(e, 'message', repr(e)))
-                    print(getattr(e, 'message', str(e)))
+                    print(traceback.format_exc())
+                    # print(getattr(e, 'message', repr(e)))
+                    # print(getattr(e, 'message', str(e)))
+                finally:
+                    cap.release()
+                    cv2.destroyAllWindows()
+            return wrapper
+        return inner_wrapper
+
+    # with specific detector 
+    def ReadCamAddDetectShowFrames_video(
+                    videoPath: Path = "", 
+                    detector = (None,),
+                    idCam = 0,
+                    frameTitle:str = "Cam feed",
+                    keysToBreak : list = [81,27]):
+        """Decorated funtion will can pass a args['frame','detector'] in defining the function """
+        """It will call the detector class if any with its args if any and initiate the call the return the called function
+        videoPath    path to the video
+        detector     detector to use in detection (default = (None,)),
+        idCam        cam id (default = 0),
+        frameTitle   show title on the frames 
+        keysToBreak  keys to break frames (default = 81,27)
+        """
+        def inner_wrapper(function):
+            @wraps(function)
+            def wrapper(*args, **kwargs):       
+                try:
+                    # open the webcam capture of the 
+                    try :
+                        cap = cv2.VideoCapture(videoPath)
+                        # may cause error in reading
+                    except :
+                        # can cause significant frame drop
+                        print("Using cv2.CAP_DSHOW")
+                        cap = cv2.VideoCapture(videoPath,cv2.CAP_DSHOW)
+                    
+                    # use of the detector funtion, whaterver class is provied here if any
+                    if detector[0]:
+                        detectorFuntion = detector[0](*detector[1:]) # to detect and use different function in the hand detector class
+                    else :
+                        detectorFuntion = None
+                    while cap.isOpened():
+                        # read image
+                        success, frame = cap.read()
+                        if success :
+                            # call the function
+                            if function :
+                                frame = function(frame=frame,detector=detectorFuntion)
+
+                            # show the frames
+                            cv2.imshow(frameTitle, frame)
+                            key = cv2.waitKey(1)
+                            if key in keysToBreak:
+                                cv2.destroyAllWindows()
+                                break
+                        else:
+                            break
+
+                except Exception as e :
+                    print(traceback.format_exc())
+                    # print(getattr(e, 'message', repr(e)))
+                    # print(getattr(e, 'message', str(e)))
                 finally:
                     cap.release()
                     cv2.destroyAllWindows()
