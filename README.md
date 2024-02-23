@@ -1,7 +1,11 @@
-# opencv
+# opencv.util
+
 
 ## this is code for facial recognition with python opencv
 
-you can update code for imotions latert on according to the requirement 
-i am still learning some opencv method to run game automatic 
-
+cv2Decorator
+.ConvertCOLOR(converter = None)
+.MirrorFrame()
+.CalculateFps(draw = needToDraw)
+.ReadCamAddDetectShowFrames_video(videoPath='test.mp4',detector = (Face,))
+.TotalTimeTaken(show = True)

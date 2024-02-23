@@ -1,10 +1,9 @@
 from typing import overload
 import cv2
-import pprint
 import mediapipe as mp
-import time
 import traceback
-from cv2Decorator import cv2Decorator
+
+mp_hands = mp.solutions.hands
 
 class handDetector():
     imgPadding= 30
@@ -16,14 +15,18 @@ class handDetector():
         self.trackCon = trackCon
         
         # 'initialization the mp hands'
-        self.mpHands = mp.solutions.hands
-        self.hands = self.mpHands.Hands(
+        self.mpHands = mp_hands
+        self.hands = mp_hands.Hands(
                             self.mode,
                             self.maxHands,
-                            self.detectionCon,
-                            self.trackCon)
+                            # self.detectionCon,
+                            # self.trackCon
+                            )
         self.mpDraw = mp.solutions.drawing_utils
         self.overlap_shape = (200,200)
+    
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.hands.close()
 
     def findHands(self, frame, draw=False):
         """Detect the hand form the images and return the HandCount and frame"""
@@ -188,5 +191,5 @@ class handDetector():
 
 
 if __name__ == "__main__":
-    # handDetector()
+    handDetector()
     pass

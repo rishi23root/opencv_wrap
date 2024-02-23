@@ -1,9 +1,9 @@
-from typing import overload
-import cv2
 import pprint
-import mediapipe as mp
 import time
 import traceback
+from typing import overload
+import cv2
+import mediapipe as mp
 from cv2Decorator import cv2Decorator
 
 

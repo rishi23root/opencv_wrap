@@ -2,7 +2,7 @@ import cv2
 import sys
 # run python face.py {image name} to get results
 
-def face_finder(img):    
+def face_finder(img):
     # load pre trained data
     trained_data =cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
 
@@ -29,5 +29,5 @@ def face_finder(img):
     # wait to close the window to move further program
     cv2.waitKey()
 
-if __name__ == '__main__':
-    face_finder(sys.argv[1])
+# if __name__ == '__main__':
+    # face_finder(sys.argv[1])

@@ -1,0 +1,9 @@
+steps to generate a new build
+
+1. update the version number
+2. update readme if required 
+3. run tests if any 
+4. under 'venv' env run command - `pip freez > requirement.txt`
+5. build package ``
+6. to update the update to test pypi - `twine upload --repository testpypi dist/*`
+7. to update the update to pypi - `twine upload dist/*`
