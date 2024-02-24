@@ -1,7 +1,5 @@
 from setuptools import setup, find_packages
-
-VERSION='0.0.1'
-DESCRIPTION='working with opencv can be quite a hussel, a lot of boiler code, nested functions for specific use cases, etc, this package is designed to make it easier to work with opencv while focusing on the main task'
+from constants import VERSION, DESCRIPTION
 
 allPackagesRequired = [i.replace('\n','') for i in open('requirements.txt', 'r').readlines()]
 
@@ -9,7 +7,7 @@ setup(
     name='opencv.wrap',
     version=VERSION,
     description=DESCRIPTION,
-    long_description=open('README.md').read(),
+    long_description=open('README.rst').read(),
     url='https://github.com/rishi23root/opencv.util',
     author='rishi23root',
     author_email='rishi23root@gmail.com',

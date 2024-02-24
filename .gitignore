@@ -2,3 +2,4 @@ venv
 build
 opencv.wrap.egg-info
 dist
+__pycache__
