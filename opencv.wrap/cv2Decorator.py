@@ -1,5 +1,4 @@
 # cv2Decorator.py
-from os import path
 import cv2
 import time
 from time import sleep as nap
@@ -15,7 +14,10 @@ class cv2Decorator:
             def wrapper(*args, **kwargs):
                 try :
                     start = time.perf_counter()
+                    # print(kwargs.keys())
+                    kwargs['time_taken'] = start
                     return_data = function(*args, **kwargs)
+                    # print(return_data)
                     if show:
                         time_taken = time.perf_counter() - start
                         in_mins = divmod(time_taken,60)
@@ -44,25 +46,26 @@ class cv2Decorator:
         def inner_wrapper(function):
             @wraps(function)
             def wrapper(*args, **kwargs):
-                # count the frames 
-                # run the funtion
-                img = function(*args, **kwargs)
-                # calculate the fps and update it on the screen if needed
-                if draw :    
-                    currentTime = time.time()
-                    # print(currentTime,Decorate.previousTime)  ### testing
-                    try:
-                        fps = 1 / (currentTime - __class__.previousTime)
-                    except ZeroDivisionError:
-                        fps = 0
-                    finally :
-                        __class__.previousTime = currentTime
+                currentTime = time.time()
 
+                # calculate the fps and update it
+                try:
+                    fps = 1 / (currentTime - __class__.previousTime)
+                except ZeroDivisionError:
+                    fps = 0
+                finally :
+                    __class__.previousTime = currentTime
+                    kwargs['fps'] = round(fps, 1)
+
+                # print("from fps",kwargs.keys())
+                return_kwargs = function(*args, **kwargs)
+
+                if draw and 'frame' in return_kwargs:    
                     # get the image_size and put the text at right top
                     try :
-                        shape = img.shape
+                        # shape = return_kwargs['frame'].shape
                         cv2.putText(
-                            img,
+                            return_kwargs['frame'],
                             f'FPS:{str(int(fps)).rjust(3)}', 
                             org =org , 
                             fontFace =font,
@@ -71,10 +74,11 @@ class cv2Decorator:
                             thickness =thickness )
                     except :
                         pass
-                    finally : 
-                        return img
+                    finally :
+                        # show the frames
+                        return return_kwargs
                 else :
-                    return img
+                    return return_kwargs
 
             return wrapper
         return inner_wrapper
@@ -87,14 +91,11 @@ class cv2Decorator:
         def inner_wrapper(function):
             @wraps(function)
             def wrapper(*args, **kwargs):
-                try :
-                    kwargs['frame'] = cv2.flip(kwargs['frame'], axis)
-                except KeyError:
-                    kwargs['img'] = cv2.flip(kwargs['img'], axis)
-                except KeyError:
-                    kwargs['image'] = cv2.flip(kwargs['image'], axis)
-                finally :
+                if 'frame' in kwargs:
+                    kwargs['mirror_frame'] = cv2.flip(kwargs['frame'], axis)
                     return function(*args,**kwargs)
+                else :
+                    raise Exception("Error in reading the Frame, frame not found, try calling the mirror frame after the frame is present")
             return wrapper
         return inner_wrapper
     
@@ -104,25 +105,24 @@ class cv2Decorator:
             @wraps(function)
             def wrapper(*args, **kwargs):
                 if converter :
-                    try :
-                        kwargs['frame'] = cv2.cvtColor(kwargs['frame'], converter)
-                    except KeyError:
-                        kwargs['img'] = cv2.cvtColor(kwargs['img'], converter)
-                    except KeyError:
-                        kwargs['image'] = cv2.cvtColor(kwargs['image'], converter)
-                    finally :
+                    if 'frame' in kwargs:
+                        kwargs['color_converted'] = cv2.cvtColor(kwargs['frame'], converter)
                         return function(*args,**kwargs)
+                    else :
+                        raise Exception("Error in reading the Frame, frame not found, try calling the mirror frame after the frame is present")
                 else :
                     return function(*args,**kwargs)
             return wrapper
         return inner_wrapper
 
+
     # simple form
-    def ReadCamAndShowFrames(idCam = 0,
-                    wCam = 640, 
-                    hCam = 480 ,
-                    frameTitle:str = "Cam feed",
-                    keysToBreak : list = [81,27]):
+    def ReadCamAndShowFrames(
+            idCam = 0,
+            wCam = 640, 
+            hCam = 480 ,
+            frameTitle:str = "Cam feed",
+            keysToBreak : list = [81,27]):
         """Decorated funtion will can pass a args['frame'] in defining the function """
         """It makes the use webcam in cv2 easier (super simple form)
         idCam        cam id (default = 0),
@@ -173,7 +173,7 @@ class cv2Decorator:
             return wrapper
         return inner_wrapper
 
-    # with specific detector 
+    # with specific detector  # updated 
     def ReadCamAddDetectShowFrames(
                     detector = (None,),
                     idCam = 0,
@@ -216,14 +216,19 @@ class cv2Decorator:
                         if success :
                             # call the function
                             if function :
-                                frame = function(frame=frame,detector=detectorFuntion)
+                                kwargs['frame'] = frame
+                                kwargs['detector'] = detectorFuntion
+                                # print("readcam before: ",kwargs.keys())
+                                return_kwargs = function(*args, **kwargs)
+                            else:
+                                return_kwargs = kwargs
 
                             # show the frames
                             cv2.imshow(frameTitle, frame)
                             key = cv2.waitKey(1)
                             if key in keysToBreak:
                                 cv2.destroyAllWindows()
-                                break
+                                return return_kwargs
                         else:
                             raise Exception("Error in reading the Frame")
 
@@ -297,6 +302,7 @@ class cv2Decorator:
             return wrapper
         return inner_wrapper
 
+
     # default decorator for more (template)
     # def default_decorator(args1 = 1):
     #     def inner_wrapper(function):
@@ -306,7 +312,6 @@ class cv2Decorator:
     #             # return function(*args,**kwargs)
     #         return wrapper
     #     return inner_wrapper
-
 
 # # call only one funtion to run all the basics things
 if __name__ == "__main__":
