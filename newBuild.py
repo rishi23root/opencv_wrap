@@ -1,6 +1,5 @@
 # create a new build for the project
-import os
-from constants import VERSION,FOLDER_NAME
+import os,re
 
 def updated_version(old_version):
     # old_version = old_version.split('.')
@@ -19,23 +18,34 @@ def updated_version(old_version):
 
     return f'{major_release}.{minor_release}.{revision}'
 
+
+# update the version in the setup.py file
+with open('setup.py','r') as f:
+    data = f.read()
+    # read the version number from the setup.py file
+    VERSION = re.search(r"VERSION='(.*?)'", data).group(1)
+    print('[info]', 'old version', VERSION)
     
+    FOLDER_NAME = re.search(r"name='(.*?)'", data).group(1)
+    print('[info]', 'FOLDER_NAME ', FOLDER_NAME)
+    # update the version number
+    NEW_VERSION = updated_version(VERSION)
+    print('[info]', 'new version', NEW_VERSION)
+    data = data.replace(f"VERSION='{VERSION}'",f"VERSION='{NEW_VERSION}'")
+
+    
+    # update the package list
+    all_packages_old = re.search(r"install_requires=\[([\s\S]*?)\]", data).group(1)
+    # print(all_packages_old)
+    install_requires = [i.replace('\n','').replace('==','>=') for i in open('requirements.txt', 'r').readlines()]
+    data = data.replace(f"install_requires=[{all_packages_old}]",f"install_requires={install_requires}")
+
+with open('setup.py','w') as f:
+    f.write(data)
 
 # remove the old build from the dist folder
 print('[info]', 'deleting old build',f'{os.getcwd()}/dist/{FOLDER_NAME}-{VERSION}.tar.gz')
 os.system(f'rm {os.getcwd()}/dist/{FOLDER_NAME}-{VERSION}.tar.gz')
-
-# update the version in the constants.py file
-with open('./constants.py','r') as f:
-    data = f.read()
-    # update the version number
-    NEW_VERSION = updated_version(VERSION)
-    print('[info]', 'new version', NEW_VERSION)
-
-    data = data.replace(f"VERSION='{VERSION}'",f"VERSION='{NEW_VERSION}'")
-
-with open('constants.py','w') as f:
-    f.write(data)
 
 
 # convert the README.md to README.rst
@@ -50,4 +60,5 @@ os.system(f'python3 setup.py sdist')
 
 # upload to test pypi using twine
 print('[info]', 'uploading to test pypi')
-os.system(f'twine upload --repository testpypi dist/{FOLDER_NAME}-{NEW_VERSION}.tar.gz')
+# os.system(f'twine upload --repository testpypi dist/{FOLDER_NAME}-{NEW_VERSION}.tar.gz')
+os.system(f'twine upload  dist/{FOLDER_NAME}-{NEW_VERSION}.tar.gz')
