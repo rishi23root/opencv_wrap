@@ -152,6 +152,7 @@ class cv2Decorator:
             show = False,
             idCam = 0,
             videoPath: Path = "",
+            fps = 30,
             wCam = 640, 
             hCam = 480,
             frameTitle:str = "feed from",
@@ -168,6 +169,8 @@ class cv2Decorator:
             Camera id, by default 0
         videoPath : Path, optional
             path to the video, by default ""
+        fps : int, optional
+            fps of the video, by default 30
         wCam : int, optional
             width of the frame if cam, by default 640
         hCam : int, optional
@@ -181,11 +184,17 @@ class cv2Decorator:
             @wraps(function)
             def wrapper(*args, **kwargs):
                 return_kwargs = kwargs
-                
+                steps = 1
                 try:
                     # open the webcam capture of the 
                     if videoPath:
                         cap = cv2.VideoCapture(videoPath)
+                        default_fps = round(cap.get(cv2.CAP_PROP_FPS))
+                        if fps < default_fps : 
+                            steps = round(default_fps/fps)
+                        
+                        print('default fps of video is :',default_fps," moving with steps of :" , steps)
+                        
                     else:
                         try :
                             cap = cv2.VideoCapture(idCam)
@@ -200,8 +209,16 @@ class cv2Decorator:
                         
                     try:
                         while cap.isOpened():
+                            count = int(cap.get(1))
+                            kwargs['frame_count'] = count
                             # read image
                             success, frame = cap.read()
+                            
+                            if videoPath and count%steps != 0 and success and frame is not None:
+                                continue
+                                
+                            
+                            
                             if success and frame is not None:
                                 # call the function
                                 if function :
