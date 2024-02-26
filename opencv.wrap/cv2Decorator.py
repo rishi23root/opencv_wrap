@@ -1,5 +1,3 @@
-# cv2Decorator.py
-import re
 import cv2
 import time
 from time import sleep as nap
@@ -102,19 +100,21 @@ class cv2Decorator:
             return wrapper
         return inner_wrapper
 
-    def MirrorFrame(axis = 1):
+    def MirrorFrame(axis = 1, inputFrameName = 'mirror_frame'):
         """flip the frame from its axis and update the 'frame' in the return data dict
 
         Parameters
         ----------
         axis : int, optional
             (0 - x) or (1 - y), by default 1
+        inputFrameName : string, optional
+            name of the frame to be updated if not present it will creat a new one, by default 'mirror_frame'
         """
         def inner_wrapper(function):
             @wraps(function)
             def wrapper(*args, **kwargs):
                 if 'frame' in kwargs:
-                    kwargs['frame'] = cv2.flip(kwargs['frame'], axis)
+                    kwargs[inputFrameName] = cv2.flip(kwargs['frame'], axis)
                     return function(*args,**kwargs)
                 else :
                     raise Exception("Error in reading the Frame, frame not found, try calling the mirror frame after the frame is present")
@@ -180,6 +180,8 @@ class cv2Decorator:
         def inner_wrapper(function):
             @wraps(function)
             def wrapper(*args, **kwargs):
+                return_kwargs = kwargs
+                
                 try:
                     # open the webcam capture of the 
                     if videoPath:
@@ -206,8 +208,6 @@ class cv2Decorator:
                                     kwargs['frame'] = frame
                                     # print("readcam before: ",kwargs.keys())
                                     return_kwargs = function(*args, **kwargs)
-                                else:
-                                    return_kwargs = kwargs
                                 
                                 # show the frames
                                 if show :
@@ -222,6 +222,7 @@ class cv2Decorator:
                                     raise Exception("Error in reading the Frame")
                                 else:
                                     break
+                
                     # expect for keyboard interrupt
                     except KeyboardInterrupt:
                         print("Keyboard Interrupt, closing cam")
@@ -233,7 +234,8 @@ class cv2Decorator:
                 finally:
                     cv2.destroyAllWindows()
                     cap.release()
-                    return return_kwargs
+                
+                return return_kwargs
                     
             return wrapper
         return inner_wrapper
@@ -241,18 +243,28 @@ class cv2Decorator:
     # detect in each frame
     def DetectInEachFrame(
             detector = None,
+            name = "detector",
         ):
-            def inner_wrapper(function):
-                @wraps(function)
-                def wrapper(*args, **kwargs):
-                    # run the funtion
-                    if detector :
-                        detectorFuntion = detector[0](*detector[1:]) # to detect and use different function in the hand detector class
-                        kwargs['detector'] = detectorFuntion
-                    
-                    return function(*args,**kwargs)
-                return wrapper
-            return inner_wrapper
+        """
+        detect in each frame and return the 'detector' in the return data dict
+
+        Parameters
+        ----------
+        detector : _type_, optional
+            detector to detect in each frame, by default None 
+        name : str, optional
+            name of the detector, this paramerter will be usefull when defining multiple detectors, by default "detecter"
+        """
+        def inner_wrapper(function):
+            @wraps(function)
+            def wrapper(*args, **kwargs):
+                # run the funtion
+                if detector : 
+                    kwargs[name] = detector
+                
+                return function(*args,**kwargs)
+            return wrapper
+        return inner_wrapper
 
     # default decorator for more (template)
     # def default_decorator(args1 = 1):
@@ -264,44 +276,24 @@ class cv2Decorator:
     #         return wrapper
     #     return inner_wrapper
 
-
-
-
-
-
-
 # # call only one funtion to run all the basics things
 if __name__ == "__main__":
-    # example 1
-    # a = 0
-    # @cv2Decorator.TotalTimeTaken(show = True)
-    # @cv2Decorator.ReadCamAndShowFrames()
-    # @cv2Decorator.CalculateFps(draw = True)
-    # @cv2Decorator.MirrorFrame()
-    # def all_actions(frame):
-    #     # update to get all different types of action on the frames 
-    #     a += 1
-    #     return frame
-
-    # all_actions()
-
-    # example 2 # face detectection
     @cv2Decorator.TotalTimeTaken(show=True)
-    @cv2Decorator.ReadCamAddDetectShowFrames(detector=(cv2.CascadeClassifier,cv2.data.haarcascades+"haarcascade_frontalface_default.xml"))
+    @cv2Decorator.DetectInEachFrame(detector=cv2.CascadeClassifier(cv2.data.haarcascades+"haarcascade_frontalface_default.xml"))
+    @cv2Decorator.AccessCamOrVideo(show=True)
     @cv2Decorator.CalculateFps(draw = True)
     @cv2Decorator.MirrorFrame()
-    def all_actions(frame,detector):
-        gray_img = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
-
+    @cv2Decorator.ConvertCOLOR(converter=cv2.COLOR_BGR2GRAY)
+    def all_actions(**kwargs):
+        frame = kwargs['frame']
+        # mirrored = kwargs['mirror_frame']
+        
         # detect face from trainerd data and detectMultiScale use to deteat every size of face
-        face_coordinate = detector.detectMultiScale(gray_img,1.3,5)
-        # extracting cordinates (x,y,width,height)
-        # (x,y,w,h) = face_coordinate[0]    
+        face_coordinate = kwargs['detector'].detectMultiScale(kwargs['color_converted'],1.3,5)
+
         for i in face_coordinate:
             (x,y,w,h) = i
             # drawing rectangle on the image 
             cv2.rectangle(frame,(x,y),(x+w,y+h),(0,255,0),2)
 
-        return frame
-
-    all_actions()
+        return kwargs
