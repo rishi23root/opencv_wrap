@@ -20,7 +20,7 @@ def extract_image(video:str,fps:int,direction):
             except : pass # last frame is none
 
 
-def face_finder(img):    
+def face_finder(img):
     # load pre trained data
     trained_data =cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
 
@@ -47,3 +47,22 @@ def face_finder(img):
     # wait to close the window to move further program
     cv2.waitKey()
 
+
+
+# function to make object detection
+
+# function to showcase the all the processed frames
+# user will provide different types of frames like real with fps , mirror , gray , face detection
+# join them and show them in a single window side by side
+# it will also took screen size into consideratioin when showing images if images are more then spaces aviailable then it will show one more window or make image smaller
+# window
+# section name 
+# frame + frame + frame + frame
+# frame + frame + frame + frame
+# section name
+# frame + frame + frame + frame
+# frame + frame + frame + frame
+
+
+# def show_all_frames():
+#     pass

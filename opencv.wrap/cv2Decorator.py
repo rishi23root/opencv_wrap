@@ -1,4 +1,5 @@
 # cv2Decorator.py
+import re
 import cv2
 import time
 from time import sleep as nap
@@ -8,41 +9,59 @@ from pathlib import Path
 
 class cv2Decorator:
     def TotalTimeTaken(show = False):
-        """Calculate the total time taken in executing a function"""
+        """Decorator to calculate the total time taken in executing of provided function and return the 'time_taken' in the return data dict
+
+        Parameters
+        ----------
+        show : bool, optional
+            show will print the time taken in human readable format, by default False
+        """
         def inner_wrapper(function):
             @wraps(function)
             def wrapper(*args, **kwargs):
-                try :
-                    start = time.perf_counter()
-                    # print(kwargs.keys())
-                    kwargs['time_taken'] = start
-                    return_data = function(*args, **kwargs)
-                    # print(return_data)
-                    if show:
-                        time_taken = time.perf_counter() - start
-                        in_mins = divmod(time_taken,60)
-                        nap(1)
-                        print("Time taken --> ",
-                            ":".join(
-                                    map(
-                                        lambda x : str(int(x)),
-                                        [in_mins[1],*divmod(in_mins[0],60)[::-1]][::-1]
-                                    ))
-                            ,"Hours")
-                    return return_data
-                except Exception as e:
-                    print(e)
+                start = time.perf_counter()
+                return_data = function(*args, **kwargs)
+                time_taken = time.perf_counter() - start
+                in_mins = divmod(time_taken,60)
+                formatedTime = (":".join(
+                    map(
+                        lambda x : str(int(x)),
+                        [in_mins[1],*divmod(in_mins[0],60)[::-1]][::-1]
+                    ))) + " Hours"
+                return_data['time_taken'] = time_taken
+
+                if show:
+                    print("Time taken --> ",formatedTime)
+
+                return return_data
             return wrapper
         return inner_wrapper
 
     previousTime = 0 # used in calculating   
-    def CalculateFps(draw=False,
+    def CalculateFps(
+            draw:bool=False,
             org = (5, 25), 
             font = cv2.FONT_HERSHEY_PLAIN,
             fontScale = 2, 
             color = (255, 0, 0),
             thickness = 2):
-        """Draw the fps of the frame on the image corner"""
+        """Decorator to calculate the fps of frames and return the 'fps' in the return data dict
+
+        Parameters
+        ----------
+        draw : bool, optional
+            draw the fps on the frame, by default False
+        org : tuple, optional
+            org: Point from where the text should start, by default (5, 25)
+        font : int, optional
+            font: Font type (int), by default cv2.FONT_HERSHEY_PLAIN
+        fontScale : int, optional
+            fontScale : Font scale factor that is multiplied by the font-specific base size, by default 2
+        color : tuple, optional
+            color : Text color, by default (255, 0, 0)
+        thickness : int, optional
+            thickness : Thickness of the lines used to draw a text, by default 2
+        """
         def inner_wrapper(function):
             @wraps(function)
             def wrapper(*args, **kwargs):
@@ -67,7 +86,7 @@ class cv2Decorator:
                         cv2.putText(
                             return_kwargs['frame'],
                             f'FPS:{str(int(fps)).rjust(3)}', 
-                            org =org , 
+                            org =org, 
                             fontFace =font,
                             fontScale = fontScale , 
                             color =color,
@@ -84,29 +103,42 @@ class cv2Decorator:
         return inner_wrapper
 
     def MirrorFrame(axis = 1):
-        """flip the frame from its y axis take axis as args"""
-        """0 means flipping around the x-axis 
-        positive value (for example, 1) means flipping around y-axis. (mirror)
-        Negative value (for example, -1) means flipping around both axes."""
+        """flip the frame from its axis and update the 'frame' in the return data dict
+
+        Parameters
+        ----------
+        axis : int, optional
+            (0 - x) or (1 - y), by default 1
+        """
         def inner_wrapper(function):
             @wraps(function)
             def wrapper(*args, **kwargs):
                 if 'frame' in kwargs:
-                    kwargs['mirror_frame'] = cv2.flip(kwargs['frame'], axis)
+                    kwargs['frame'] = cv2.flip(kwargs['frame'], axis)
                     return function(*args,**kwargs)
                 else :
                     raise Exception("Error in reading the Frame, frame not found, try calling the mirror frame after the frame is present")
             return wrapper
         return inner_wrapper
     
-    def ConvertCOLOR(converter = cv2.COLOR_RGB2BGR):
-        """Convert COLOR of the frame to the converter provided"""
+    def ConvertCOLOR(converter = cv2.COLOR_RGB2BGR, frameName = None):
+        """Convert COLOR of the frame to the converter provided and return the 'color_converted' or the provided name in the return data dict
+
+        Parameters
+        ----------
+        converter : int, optional
+            cv2.COLOR_RGB2BGR or any other cv2.COLOR_*, by default cv2.COLOR_RGB2BGR
+        frameName : string, optional
+            name of the frame to be updated if not provided then it will update dict with key 'color_converted', by default None
+        """
         def inner_wrapper(function):
             @wraps(function)
             def wrapper(*args, **kwargs):
                 if converter :
                     if 'frame' in kwargs:
-                        kwargs['color_converted'] = cv2.cvtColor(kwargs['frame'], converter)
+                        # if frameName:
+                        #     kwargs[frameName] = cv2.cvtColor(kwargs['frame'], converter)
+                        kwargs[frameName if frameName else 'color_converted'] = cv2.cvtColor(kwargs['frame'], converter)
                         return function(*args,**kwargs)
                     else :
                         raise Exception("Error in reading the Frame, frame not found, try calling the mirror frame after the frame is present")
@@ -115,193 +147,112 @@ class cv2Decorator:
             return wrapper
         return inner_wrapper
 
-
-    # simple form
-    def ReadCamAndShowFrames(
+    # access cam and video
+    def AccessCamOrVideo(
+            show = False,
             idCam = 0,
+            videoPath: Path = "",
             wCam = 640, 
-            hCam = 480 ,
-            frameTitle:str = "Cam feed",
-            keysToBreak : list = [81,27]):
-        """Decorated funtion will can pass a args['frame'] in defining the function """
-        """It makes the use webcam in cv2 easier (super simple form)
-        idCam        cam id (default = 0),
-        wCam         cam frame width (default = 640), if set to None it will not be update from cam
-        hCam         cam frame height (default = 480),  if set to None it will not be update from cam
-        frameTitle   show title on the frames 
-        keysToBreak  keys to break frames (default = 81,27)
+            hCam = 480,
+            frameTitle:str = "feed from",
+            keysToBreak : list = [81,27]
+            ):
+        """Decorated funtion to access the cam or video and return the 'frame' in the return data dict 
+
+
+        Parameters
+        ----------
+        show : bool, optional
+            show the frames, by default False
+        idCam : int, optional
+            Camera id, by default 0
+        videoPath : Path, optional
+            path to the video, by default ""
+        wCam : int, optional
+            width of the frame if cam, by default 640
+        hCam : int, optional
+            height of the frame if cam, by default 480
+        frameTitle : str, optional
+            initial title of the frame it will update according source provided, by default "feed from" 
+        keysToBreak : list, optional
+            keys to break the frames, by default [81,27]
         """
         def inner_wrapper(function):
             @wraps(function)
-            def wrapper(*args, **kwargs):       
+            def wrapper(*args, **kwargs):
                 try:
                     # open the webcam capture of the 
-                    try :
-                        cap = cv2.VideoCapture(idCam)
-                        # may cause error in reading
-                    except :
-                        # can cause significant frame drop
-                        print("Using cv2.CAP_DSHOW")
-                        cap = cv2.VideoCapture(idCam,cv2.CAP_DSHOW)
-                        
-                    cap.set(3, wCam)
-                    cap.set(4, hCam)
-                    while True:
-                        # read image
-                        success, frame = cap.read()
-                        if success :
-                            # call the function
-                            if function :
-                                frame = function(frame=frame)
-
-                            # show the frames
-                            cv2.imshow(frameTitle, frame)
-                            key = cv2.waitKey(1)
-                            if key in keysToBreak:
-                                cv2.destroyAllWindows()
-                                break
-                        else:
-                            raise Exception("Error in reading the Frame")
-
-                except Exception as e :
-                    print(traceback.format_exc())
-                    # print(getattr(e, 'message', repr(e)))
-                    # print(getattr(e, 'message', str(e)))
-                finally:
-                    cap.release()
-                    cv2.destroyAllWindows()
-            return wrapper
-        return inner_wrapper
-
-    # with specific detector  # updated 
-    def ReadCamAddDetectShowFrames(
-                    detector = (None,),
-                    idCam = 0,
-                    wCam = 640, 
-                    hCam = 480 ,
-                    frameTitle:str = "Cam feed",
-                    keysToBreak : list = [81,27]):
-        """Decorated funtion will can pass a args['frame','detector'] in defining the function """
-        """It will call the detector class if any with its args if any and initiate the call the return the called function
-        detector     detector to use in detection (default = (None,)),
-        idCam        cam id (default = 0),
-        wCam         cam frame width (default = 640), if set to None it will not be update from cam
-        hCam         cam frame height (default = 480),  if set to None it will not be update from cam
-        frameTitle   show title on the frames 
-        keysToBreak  keys to break frames (default = 81,27)
-        """
-        def inner_wrapper(function):
-            @wraps(function)
-            def wrapper(*args, **kwargs):       
-                try:
-                    # open the webcam capture of the 
-                    try :
-                        cap = cv2.VideoCapture(idCam)
-                        # may cause error in reading
-                    except :
-                        # can cause significant frame drop
-                        print("Using cv2.CAP_DSHOW")
-                        cap = cv2.VideoCapture(idCam,cv2.CAP_DSHOW)
-                    
-                    # use of the detector funtion, whaterver class is provied here if any
-                    if detector[0]:
-                        detectorFuntion = detector[0](*detector[1:]) # to detect and use different function in the hand detector class
-                    else :
-                        detectorFuntion = None
-                    cap.set(3, wCam)
-                    cap.set(4, hCam)
-                    while True:
-                        # read image
-                        success, frame = cap.read()
-                        if success :
-                            # call the function
-                            if function :
-                                kwargs['frame'] = frame
-                                kwargs['detector'] = detectorFuntion
-                                # print("readcam before: ",kwargs.keys())
-                                return_kwargs = function(*args, **kwargs)
-                            else:
-                                return_kwargs = kwargs
-
-                            # show the frames
-                            cv2.imshow(frameTitle, frame)
-                            key = cv2.waitKey(1)
-                            if key in keysToBreak:
-                                cv2.destroyAllWindows()
-                                return return_kwargs
-                        else:
-                            raise Exception("Error in reading the Frame")
-
-                except Exception as e :
-                    print(traceback.format_exc())
-                    # print(getattr(e, 'message', repr(e)))
-                    # print(getattr(e, 'message', str(e)))
-                finally:
-                    cap.release()
-                    cv2.destroyAllWindows()
-            return wrapper
-        return inner_wrapper
-
-    # with specific detector 
-    def ReadCamAddDetectShowFrames_video(
-                    videoPath: Path = "", 
-                    detector = (None,),
-                    idCam = 0,
-                    frameTitle:str = "Cam feed",
-                    keysToBreak : list = [81,27]):
-        """Decorated funtion will can pass a args['frame','detector'] in defining the function """
-        """It will call the detector class if any with its args if any and initiate the call the return the called function
-        videoPath    path to the video
-        detector     detector to use in detection (default = (None,)),
-        idCam        cam id (default = 0),
-        frameTitle   show title on the frames 
-        keysToBreak  keys to break frames (default = 81,27)
-        """
-        def inner_wrapper(function):
-            @wraps(function)
-            def wrapper(*args, **kwargs):       
-                try:
-                    # open the webcam capture of the 
-                    try :
+                    if videoPath:
                         cap = cv2.VideoCapture(videoPath)
-                        # may cause error in reading
-                    except :
-                        # can cause significant frame drop
-                        print("Using cv2.CAP_DSHOW")
-                        cap = cv2.VideoCapture(videoPath,cv2.CAP_DSHOW)
-                    
-                    # use of the detector funtion, whaterver class is provied here if any
-                    if detector[0]:
-                        detectorFuntion = detector[0](*detector[1:]) # to detect and use different function in the hand detector class
-                    else :
-                        detectorFuntion = None
-                    while cap.isOpened():
-                        # read image
-                        success, frame = cap.read()
-                        if success :
-                            # call the function
-                            if function :
-                                frame = function(frame=frame,detector=detectorFuntion)
-
-                            # show the frames
-                            cv2.imshow(frameTitle, frame)
-                            key = cv2.waitKey(1)
-                            if key in keysToBreak:
-                                cv2.destroyAllWindows()
-                                break
-                        else:
-                            break
-
+                    else:
+                        try :
+                            cap = cv2.VideoCapture(idCam)
+                            # may cause error in reading
+                        except :
+                            # can cause significant frame drop
+                            print("Using cv2.CAP_DSHOW")
+                            cap = cv2.VideoCapture(idCam,cv2.CAP_DSHOW)
+                            
+                        cap.set(3, wCam)
+                        cap.set(4, hCam)
+                        
+                    try:
+                        while cap.isOpened():
+                            # read image
+                            success, frame = cap.read()
+                            if success and frame is not None:
+                                # call the function
+                                if function :
+                                    kwargs['frame'] = frame
+                                    # print("readcam before: ",kwargs.keys())
+                                    return_kwargs = function(*args, **kwargs)
+                                else:
+                                    return_kwargs = kwargs
+                                
+                                # show the frames
+                                if show :
+                                    Title = frameTitle + ( ' video' if videoPath else " Cam")
+                                    cv2.imshow(Title , return_kwargs['frame'])
+                                key = cv2.waitKey(1)
+                                if key in keysToBreak:
+                                    cv2.destroyAllWindows()
+                                    break
+                            else:
+                                if not success and not videoPath:
+                                    raise Exception("Error in reading the Frame")
+                                else:
+                                    break
+                    # expect for keyboard interrupt
+                    except KeyboardInterrupt:
+                        print("Keyboard Interrupt, closing cam")
+                        return return_kwargs
                 except Exception as e :
-                    print(traceback.format_exc())
+                    print('[error]',traceback.format_exc())
                     # print(getattr(e, 'message', repr(e)))
                     # print(getattr(e, 'message', str(e)))
                 finally:
-                    cap.release()
                     cv2.destroyAllWindows()
+                    cap.release()
+                    return return_kwargs
+                    
             return wrapper
         return inner_wrapper
-
+    
+    # detect in each frame
+    def DetectInEachFrame(
+            detector = None,
+        ):
+            def inner_wrapper(function):
+                @wraps(function)
+                def wrapper(*args, **kwargs):
+                    # run the funtion
+                    if detector :
+                        detectorFuntion = detector[0](*detector[1:]) # to detect and use different function in the hand detector class
+                        kwargs['detector'] = detectorFuntion
+                    
+                    return function(*args,**kwargs)
+                return wrapper
+            return inner_wrapper
 
     # default decorator for more (template)
     # def default_decorator(args1 = 1):
@@ -312,6 +263,12 @@ class cv2Decorator:
     #             # return function(*args,**kwargs)
     #         return wrapper
     #     return inner_wrapper
+
+
+
+
+
+
 
 # # call only one funtion to run all the basics things
 if __name__ == "__main__":
