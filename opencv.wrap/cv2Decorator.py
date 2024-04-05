@@ -18,6 +18,7 @@ class cv2Decorator:
             @wraps(function)
             def wrapper(*args, **kwargs):
                 start = time.perf_counter()
+                kwargs['startsAt'] = start
                 return_data = function(*args, **kwargs)
                 time_taken = time.perf_counter() - start
                 in_mins = divmod(time_taken,60)
