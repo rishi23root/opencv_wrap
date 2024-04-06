@@ -1,5 +1,7 @@
+from math import ceil, floor
 import os
 from pathlib import Path
+from tkinter import HORIZONTAL
 import cv2
 import numpy as np
 import time
@@ -70,12 +72,14 @@ def resizeImage(image, width=None, height=None, inter=cv2.INTER_AREA):
     else:
         # calculate the ratio of the width and construct the
         # dimensions
-        r = width / float(w)
+        r = width / (float(w) if w else 1)
         dim = (width, int(h * r))
-
+        
     # return the resized image
     return cv2.resize(image, dim, interpolation=inter)
 
+
+# either need to ### update this or remove this
 # clip image from the given coordinates
 def clipImage(image, coordinates):
     """clip the image from the given coordinates
@@ -85,7 +89,7 @@ def clipImage(image, coordinates):
     image : image
         image to clip
     coordinates : tuple
-        coordinates of the image to clip
+        coordinates of the image to clip (x1, y1, x2, y2)
 
     Returns
     -------
@@ -93,10 +97,9 @@ def clipImage(image, coordinates):
         clipped image
     """
     # unpack the coordinates
-    x1, y1, x2, y2 = coordinates
-
+    (x,y,w,h) = coordinates
     # clip the image
-    return image[y1:y2, x1:x2]
+    return image[ y:y+h, x:x+w]
 
 
 
@@ -141,12 +144,12 @@ def added_title(frame, title:str, font=cv2.FONT_HERSHEY_SIMPLEX, font_scale=.7, 
     possition = (int((frame_width - text_width) / 2), 15)
 
     # add a strip of 30 pixels at the top of the image
-    frame = cv2.copyMakeBorder(frame, 25, 0, 0, 0, cv2.BORDER_CONSTANT, value=(0, 0, 0))
+    frame = cv2.copyMakeBorder(frame, 25, 0, 1, 1, cv2.BORDER_CONSTANT, value=(0, 0, 0))
     # showcase the top fps and time taken till yet
     cv2.putText(frame, title, possition, font, font_scale, color, thickness)
     return frame
 
-def combine_images(images, view='horizontal'):
+def combine_images(images, view:str='horizontal',mWidth:int=400, col:int=2):
     """combine the images in the given view
 
     Parameters
@@ -155,33 +158,64 @@ def combine_images(images, view='horizontal'):
         images to combine
     view : str, optional
         view of combination of image, (vertical or horizaontal), by default 'horizontal'
+    mWidth : int, optional
+        max width of the window of images, by default 400
+    col : int, optional
+        number of columns to show row or col respective to view horizontal or vertical, by default 1
     """
     
-    if view == 'horizontal':
-        # get the height of the first image
-        height = images[0].shape[0]
-        # get the width of all the images
-        width = sum([i.shape[1] for i in images])
+    if len(images) == 0:
+        raise Exception("No images to show, add atleast one image to show the image")
 
-        # create a blank image of the size of the combined images
-        combined = np.zeros((height, width, 3), dtype=np.uint8)
-
-        # add the images to the combined image
-        for i, image in enumerate(images):
-            combined[:, i * image.shape[1]:(i + 1) * image.shape[1]] = image
-    else:
-        # get the width of the first image
-        width = images[0].shape[1]
-        # get the height of all the images
-        height = sum([i.shape[0] for i in images])
-
-        # create a blank image of the size of the combined images
-        combined = np.zeros((height, width, 3), dtype=np.uint8)
-
-        # add the images to the combined image
-        for i, image in enumerate(images):
-            combined[i * image.shape[0]:(i + 1) * image.shape[0], :] = image
+    # first check for no of col to show in a row 
+    eachImageWidth = mWidth // (col if col >= 3 else 2)
     
+    # then divide the provided space with col and resize images accordingly
+    images = [resizeImage(i,eachImageWidth,eachImageWidth) for i in images]
+    # add border for the images
+    images = [cv2.copyMakeBorder(i, 1, 1, 1, 1, cv2.BORDER_CONSTANT, value=(0, 0, 0)) for i in images]
+    
+    
+    # create a window to show the output images
+    # heigth, width, _ = images[0].shape
+    if view == 'horizontal':
+        height = mWidth + (col*2) + 2
+        width = (images[0].shape[0] * ceil(len(images) / col)) + (col * 2)
+        combined = np.zeros((height, width, 3), dtype=np.uint8)
+        
+        print(width,height)
+
+        # Loop through each pair of images and combine them horizontally
+        row_offset = 0
+        for i in range(0, len(images), col):
+            col_offset = 0            
+            for each in images[i:i+col]:
+                # Get the dimensions of the current image
+                rows, cols, _ = each.shape
+                # print(rows,cols,"col",  col_offset,col_offset+cols)
+                # Combine the images horizontally
+                combined[row_offset:row_offset+rows, col_offset:col_offset+cols, :] = each
+                # Update column offset for the next image
+                col_offset += cols
+            # Update row offset for the next row
+            row_offset += rows
+
+    else:
+        height = (images[0].shape[0] * ceil(len(images) / col)) + (col * 2)
+        width = mWidth + (col*2) + 2
+        combined = np.zeros((height, width, 3),dtype=np.uint8)
+        
+        # then combine the images
+        row_offset = 0
+        for index in range(0,len(images),col):
+            cols_offset = 0
+            for each in images[index:index+col]:
+                rows, cols, _ = each.shape
+                combined[row_offset:row_offset+rows, cols_offset:cols_offset + cols, :] = each
+                cols_offset += cols
+            row_offset += rows
+
+        
     return combined
 
 
@@ -190,14 +224,12 @@ def show_all_frames(dict,keysToShow=['frame','color_converted'],showStats = True
         raise Exception("No keys to show, add atleast one key to show the image")
     if len(keysToShow) == 1:
         # show the image
-        cv2.imshow(window_name,dict[keysToShow[0]])
+        cv2.imshow(windowName,dict[keysToShow[0]])
         return
 
     # create a window to show the output images
-    width = 0
-    height = 0
     showcase = {}
-        
+    
     # 1/ first create a combined image of all 
     for i in keysToShow:
         if i not in dict.keys():
@@ -208,10 +240,17 @@ def show_all_frames(dict,keysToShow=['frame','color_converted'],showStats = True
             if type(dict[i]) == type(None): raise Exception(f"key {i} is None")
             elif type(dict[i]) == type(np.array([])):
                 # np array means an individual image || print(f"key {i} is np array",len(dict[i]))
-                showcase[i] = dict[i]
+                if i == 'frame':
+                    showcase[i] = added_title(dict[i], "Real Image")
+                else:
+                    showcase[i] = added_title(resizeImage(dict[i],400), i)
             elif type(dict[i]) == type([]):
-                print(f"key {i} is np array",len(dict[i]))
-                pass
+                if len(dict[i]) > 0 and type(dict[i][0]) == type(np.array([])):
+                    # print(f"key {i} is array of length",len(dict[i]))
+                    ##### update view according to the space aviailable
+                    # calculate the space available in the window after showing the other images
+                    # accoring to that show this list of images in HORIZONTAL or VERTICAL
+                    showcase[i] = added_title(combine_images(dict[i]), i)
             else:
                 print(f"key {i} is not np array or string")
                 raise Exception(f"key {i} is not np array or string")
@@ -220,23 +259,39 @@ def show_all_frames(dict,keysToShow=['frame','color_converted'],showStats = True
             # colculate the size of the image and resize it if need and then show it
             pass
     else:
-        # print("all keys found")
-        pass
-    
+        # print(showcase.keys())
+        allimagesSize = [i.shape for i in showcase.values()]
+        rows_comb = max([i[0] for i in allimagesSize])
+        cols_comb = sum([i[1] for i in allimagesSize])
+        comb = np.zeros(shape=(rows_comb, cols_comb, 3), dtype=np.uint8)
+        
+        cols_offset = 0
+        # print('without detected',rows_comb,cols_comb)
+        for i, image in showcase.items():
+            # if i == 'detected': 
+            #     print('with detected',rows_comb,cols_comb)
+            # Check if the image is grayscale
+            if len(image.shape) == 2: 
+                image = np.stack((image,) * 3, axis=-1)
+            
+            rows, cols, _ = image.shape
+            comb[:rows, cols_offset:cols_offset + cols, :] = image
+            cols_offset += cols
+                
     # make all the frames of same size
-    dict['frame'] = added_title(dict['frame'], "Real Image")
-    dict['color_converted'] = added_title(resizeImage(dict['color_converted'],400,400), "Gray Image")
+    # dict['frame'] = added_title(dict['frame'], "Real Image")
+    # dict['color_converted'] = added_title(resizeImage(dict['color_converted'],400,400), "Gray Image")
     
-    rows_rgb, cols_rgb, channels = dict['frame'].shape
-    rows_gray, cols_gray = dict['color_converted'].shape[:2]
+    # rows_rgb, cols_rgb, channels = dict['frame'].shape
+    # rows_gray, cols_gray = dict['color_converted'].shape[:2]
     
-    # combine grey and color converted image
-    rows_comb = max(rows_rgb, rows_gray)
-    cols_comb = cols_rgb + cols_gray
-    comb = np.zeros(shape=(rows_comb, cols_comb, channels), dtype=np.uint8)
+    # # combine grey and color converted image
+    # rows_comb = max(rows_rgb, rows_gray)
+    # cols_comb = cols_rgb + cols_gray
+    # comb = np.zeros(shape=(rows_comb, cols_comb, channels), dtype=np.uint8)
 
-    comb[:rows_rgb, :cols_rgb] = dict['frame']
-    comb[:rows_gray, cols_rgb:] = dict['color_converted'][:, :, None]
+    # comb[:rows_rgb, :cols_rgb] = dict['frame']
+    # comb[:rows_gray, cols_rgb:] = dict['color_converted'][:, :, None]
 
 
     if showStats:
@@ -259,7 +314,8 @@ def show_all_frames(dict,keysToShow=['frame','color_converted'],showStats = True
 
     # show the output image 
     cv2.imshow(windowName, comb)
-    
-    
-# showcase top fps and time taken till yet 
-# then show the images 
+
+
+
+
+# check for keywork 'update' with hashtags in the code to fix from there 
