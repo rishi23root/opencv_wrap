@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 from tkinter import HORIZONTAL
 import cv2
+from cycler import V
 import numpy as np
 import time
 
@@ -116,7 +117,7 @@ def clipImage(image, coordinates):
 # frame + frame + frame + frame
 
 
-def added_title(frame, title:str, font=cv2.FONT_HERSHEY_SIMPLEX, font_scale=.7, color=(255,255,255), thickness=1):
+def added_title(frame, title:str, font=cv2.FONT_HERSHEY_SIMPLEX, font_scale=.7, color=(255,255,255),bcolor=(0,0,0), thickness=1):
     """take the frame and add the title to the top of the image
 
     Parameters
@@ -144,12 +145,12 @@ def added_title(frame, title:str, font=cv2.FONT_HERSHEY_SIMPLEX, font_scale=.7, 
     possition = (int((frame_width - text_width) / 2), 15)
 
     # add a strip of 30 pixels at the top of the image
-    frame = cv2.copyMakeBorder(frame, 25, 0, 1, 1, cv2.BORDER_CONSTANT, value=(0, 0, 0))
+    frame = cv2.copyMakeBorder(frame, 25, 0, 1, 1, cv2.BORDER_CONSTANT, value=bcolor)
     # showcase the top fps and time taken till yet
     cv2.putText(frame, title, possition, font, font_scale, color, thickness)
     return frame
 
-def combine_images(images, view:str='horizontal',mWidth:int=400, col:int=2):
+def combine_images(images, mWidth:int=400, col:int=2, compress=True):
     """combine the images in the given view
 
     Parameters
@@ -164,62 +165,71 @@ def combine_images(images, view:str='horizontal',mWidth:int=400, col:int=2):
         number of columns to show row or col respective to view horizontal or vertical, by default 1
     """
     
+    # resize all images to the same size
     if len(images) == 0:
         raise Exception("No images to show, add atleast one image to show the image")
 
     # first check for no of col to show in a row 
-    eachImageWidth = mWidth // (col if col >= 3 else 2)
+    eachImageWidth = mWidth // col 
     
     # then divide the provided space with col and resize images accordingly
-    images = [resizeImage(i,eachImageWidth,eachImageWidth) for i in images]
+    if compress:
+        images = [resizeImage(i,eachImageWidth,eachImageWidth) for i in images]
+    else:
+        base = images[0]
+        for i in range(1,len(images)):
+            if images[i].shape != base.shape:
+                images[i] = resizeImage(images[i],base.shape[1],base.shape[0])
+        
     # add border for the images
     images = [cv2.copyMakeBorder(i, 1, 1, 1, 1, cv2.BORDER_CONSTANT, value=(0, 0, 0)) for i in images]
     
-    
-    # create a window to show the output images
+    # biggest image width 
+    maxWidth = max([i.shape[1] for i in images])*col
+
     # heigth, width, _ = images[0].shape
-    if view == 'horizontal':
-        height = mWidth + (col*2) + 2
-        width = (images[0].shape[0] * ceil(len(images) / col)) + (col * 2)
-        combined = np.zeros((height, width, 3), dtype=np.uint8)
-        
-        print(width,height)
-
-        # Loop through each pair of images and combine them horizontally
-        row_offset = 0
-        for i in range(0, len(images), col):
-            col_offset = 0            
-            for each in images[i:i+col]:
-                # Get the dimensions of the current image
-                rows, cols, _ = each.shape
-                # print(rows,cols,"col",  col_offset,col_offset+cols)
-                # Combine the images horizontally
-                combined[row_offset:row_offset+rows, col_offset:col_offset+cols, :] = each
-                # Update column offset for the next image
-                col_offset += cols
-            # Update row offset for the next row
-            row_offset += rows
-
+    if col == 1:
+        return np.vstack(images)
     else:
-        height = (images[0].shape[0] * ceil(len(images) / col)) + (col * 2)
-        width = mWidth + (col*2) + 2
-        combined = np.zeros((height, width, 3),dtype=np.uint8)
-        
-        # then combine the images
-        row_offset = 0
-        for index in range(0,len(images),col):
-            cols_offset = 0
-            for each in images[index:index+col]:
-                rows, cols, _ = each.shape
-                combined[row_offset:row_offset+rows, cols_offset:cols_offset + cols, :] = each
-                cols_offset += cols
-            row_offset += rows
+        returnImages = []
+        for i in range(0, len(images), col):
+            maxheight = max([i.shape[0] for i in images[i:i+col]])
+            returnHorizontal = []
+            for j in images[i:i+col]:
+                
+                # super import the image to the max height
+                if j.shape[0] < maxheight:
+                    # print("fixing height", j.shape[0], maxheight)
+                    j = cv2.copyMakeBorder(j, 0, maxheight-j.shape[0], 0, 0, cv2.BORDER_CONSTANT, value=(0, 0, 0))
+                elif j.shape[0] > maxheight:
+                    # print("fixing height", j.shape[0], maxheight)
+                    j = j[:maxheight,:]
+                    
+                # print(j.shape)
+                returnHorizontal.append(j)
+            
+            returnImages.append(np.hstack(returnHorizontal))
+                
+        else:
+            # in the return images there are images in the row and now combine them vertically
+            # first check if all images are fo same size, if not add border to right of the image and then combine them
+            # print("maxWidth",maxWidth,returnImages[0].shape, len(returnImages))
+            lastImage = returnImages[-1]
+            if lastImage.shape[1] < maxWidth and len(returnImages) > 1:
+                returnImages[-1] = np.hstack([lastImage,np.zeros(shape=(lastImage.shape[0],lastImage.shape[1],3),dtype=np.uint8)])
+                # print("updated shape",lastImage.shape)
+                
+            # for j in returnImages:
+            #     print(j.shape)
+            
+        return np.vstack(returnImages)
 
-        
-    return combined
-
+canvasW = 0
+canvasH = 0
 
 def show_all_frames(dict,keysToShow=['frame','color_converted'],showStats = True, windowName='Showcase Frames'):
+    global canvasH, canvasW
+    
     if len(keysToShow) == 0:
         raise Exception("No keys to show, add atleast one key to show the image")
     if len(keysToShow) == 1:
@@ -229,6 +239,7 @@ def show_all_frames(dict,keysToShow=['frame','color_converted'],showStats = True
 
     # create a window to show the output images
     showcase = {}
+    expectedWidth = 0
     
     # 1/ first create a combined image of all 
     for i in keysToShow:
@@ -239,41 +250,70 @@ def show_all_frames(dict,keysToShow=['frame','color_converted'],showStats = True
             # check what type of data does these keys have
             if type(dict[i]) == type(None): raise Exception(f"key {i} is None")
             elif type(dict[i]) == type(np.array([])):
+                if len(dict[i].shape) == 2: 
+                    dict[i] = np.stack((dict[i],) * 3, axis=-1)
+                    
                 # np array means an individual image || print(f"key {i} is np array",len(dict[i]))
                 if i == 'frame':
                     showcase[i] = added_title(dict[i], "Real Image")
+                    expectedWidth += showcase[i].shape[0]
                 else:
-                    showcase[i] = added_title(resizeImage(dict[i],400), i)
+                    if showcase.get('conversions') == None: 
+                        showcase['conversions'] = {}
+                        showcase['conversions'][i] = added_title(resizeImage(dict[i],400), i)
+                        expectedWidth += showcase['conversions'][i].shape[0]
+                    else:
+                        showcase['conversions'][i] = added_title(resizeImage(dict[i],400), i)
+                
+                
+                # add width to expected width and pass it to add frames horizontal or vertical of combination
             elif type(dict[i]) == type([]):
                 if len(dict[i]) > 0 and type(dict[i][0]) == type(np.array([])):
                     # print(f"key {i} is array of length",len(dict[i]))
                     ##### update view according to the space aviailable
                     # calculate the space available in the window after showing the other images
                     # accoring to that show this list of images in HORIZONTAL or VERTICAL
-                    showcase[i] = added_title(combine_images(dict[i]), i)
+                    if expectedWidth > 400:
+                        showcase[i] = added_title(combine_images(dict[i],mWidth=expectedWidth), i,bcolor= (0, 0, 0))
+                    else:
+                        showcase[i] = added_title(combine_images(dict[i]), i,bcolor= (0, 0, 0))
             else:
                 print(f"key {i} is not np array or string")
                 raise Exception(f"key {i} is not np array or string")
 
-
             # colculate the size of the image and resize it if need and then show it
-            pass
     else:
-        # print(showcase.keys())
+        if showcase.get('conversions') != None:
+            maxWidth = max(showcase['conversions'].values(),key= lambda x: x.shape[0]).shape[0]
+            showcase['conversions'] = added_title(combine_images(showcase['conversions'].values(),mWidth=maxWidth,col=1,compress=False), 'conversions',bcolor= (0, 0, 0))
+        
+        # all the images are ready to show now combine them
+        
+        types = [type(i) for i in showcase.values()]
+        # print(types)
+        
         allimagesSize = [i.shape for i in showcase.values()]
         rows_comb = max([i[0] for i in allimagesSize])
         cols_comb = sum([i[1] for i in allimagesSize])
+        
+        
+        rows_comb = max(
+                rows_comb,
+                canvasW
+            )
+        cols_comb = max(
+                cols_comb,
+                canvasH
+            ) 
+        
+        canvasW = rows_comb
+        canvasH = cols_comb
+        
         comb = np.zeros(shape=(rows_comb, cols_comb, 3), dtype=np.uint8)
         
         cols_offset = 0
         # print('without detected',rows_comb,cols_comb)
         for i, image in showcase.items():
-            # if i == 'detected': 
-            #     print('with detected',rows_comb,cols_comb)
-            # Check if the image is grayscale
-            if len(image.shape) == 2: 
-                image = np.stack((image,) * 3, axis=-1)
-            
             rows, cols, _ = image.shape
             comb[:rows, cols_offset:cols_offset + cols, :] = image
             cols_offset += cols

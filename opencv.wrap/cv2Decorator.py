@@ -122,7 +122,7 @@ class cv2Decorator:
             return wrapper
         return inner_wrapper
     
-    def ConvertCOLOR(converter = cv2.COLOR_RGB2BGR, frameName = None):
+    def ConvertCOLOR(converter = cv2.COLOR_RGB2BGR, frameName = 'greyScale'):
         """Convert COLOR of the frame to the converter provided and return the 'color_converted' or the provided name in the return data dict
 
         Parameters
@@ -130,16 +130,14 @@ class cv2Decorator:
         converter : int, optional
             cv2.COLOR_RGB2BGR or any other cv2.COLOR_*, by default cv2.COLOR_RGB2BGR
         frameName : string, optional
-            name of the frame to be updated if not provided then it will update dict with key 'color_converted', by default None
+            name of the frame to be updated if not provided then it will update dict with key 'color_converted', by default "greyScale'
         """
         def inner_wrapper(function):
             @wraps(function)
             def wrapper(*args, **kwargs):
                 if converter :
                     if 'frame' in kwargs:
-                        # if frameName:
-                        #     kwargs[frameName] = cv2.cvtColor(kwargs['frame'], converter)
-                        kwargs[frameName if frameName else 'color_converted'] = cv2.cvtColor(kwargs['frame'], converter)
+                        kwargs[frameName] = cv2.cvtColor(kwargs['frame'], converter)
                         return function(*args,**kwargs)
                     else :
                         raise Exception("Error in reading the Frame, frame not found, try calling the mirror frame after the frame is present")
