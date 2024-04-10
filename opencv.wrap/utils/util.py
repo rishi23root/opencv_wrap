@@ -80,7 +80,6 @@ def resizeImage(image, width=None, height=None, inter=cv2.INTER_AREA):
     return cv2.resize(image, dim, interpolation=inter)
 
 
-# either need to ### update this or remove this
 # clip image from the given coordinates
 def clipImage(image, coordinates):
     """clip the image from the given coordinates
@@ -179,8 +178,8 @@ def combine_images(images, mWidth:int=400, col:int=2, compress=True):
         base = images[0]
         for i in range(1,len(images)):
             if images[i].shape != base.shape:
-                images[i] = resizeImage(images[i],base.shape[1],base.shape[0])
-        
+                images[i] = resizeImage(images[i],base.shape[0],base.shape[1])
+    
     # add border for the images
     images = [cv2.copyMakeBorder(i, 1, 1, 1, 1, cv2.BORDER_CONSTANT, value=(0, 0, 0)) for i in images]
     
@@ -196,7 +195,6 @@ def combine_images(images, mWidth:int=400, col:int=2, compress=True):
             maxheight = max([i.shape[0] for i in images[i:i+col]])
             returnHorizontal = []
             for j in images[i:i+col]:
-                
                 # super import the image to the max height
                 if j.shape[0] < maxheight:
                     # print("fixing height", j.shape[0], maxheight)
@@ -270,7 +268,6 @@ def show_all_frames(dict,keysToShow=['frame','color_converted'],showStats = True
             elif type(dict[i]) == type([]):
                 if len(dict[i]) > 0 and type(dict[i][0]) == type(np.array([])):
                     # print(f"key {i} is array of length",len(dict[i]))
-                    ##### update view according to the space aviailable
                     # calculate the space available in the window after showing the other images
                     # accoring to that show this list of images in HORIZONTAL or VERTICAL
                     if expectedWidth > 400:
@@ -285,17 +282,11 @@ def show_all_frames(dict,keysToShow=['frame','color_converted'],showStats = True
     else:
         if showcase.get('conversions') != None:
             maxWidth = max(showcase['conversions'].values(),key= lambda x: x.shape[0]).shape[0]
-            showcase['conversions'] = added_title(combine_images(showcase['conversions'].values(),mWidth=maxWidth,col=1,compress=False), 'conversions',bcolor= (0, 0, 0))
-        
-        # all the images are ready to show now combine them
-        
-        types = [type(i) for i in showcase.values()]
-        # print(types)
+            showcase['conversions'] = added_title(combine_images(list(showcase['conversions'].values()),mWidth=maxWidth,col=1,compress=False), 'conversions',bcolor= (0, 0, 0))
         
         allimagesSize = [i.shape for i in showcase.values()]
         rows_comb = max([i[0] for i in allimagesSize])
         cols_comb = sum([i[1] for i in allimagesSize])
-        
         
         rows_comb = max(
                 rows_comb,
@@ -317,22 +308,6 @@ def show_all_frames(dict,keysToShow=['frame','color_converted'],showStats = True
             rows, cols, _ = image.shape
             comb[:rows, cols_offset:cols_offset + cols, :] = image
             cols_offset += cols
-                
-    # make all the frames of same size
-    # dict['frame'] = added_title(dict['frame'], "Real Image")
-    # dict['color_converted'] = added_title(resizeImage(dict['color_converted'],400,400), "Gray Image")
-    
-    # rows_rgb, cols_rgb, channels = dict['frame'].shape
-    # rows_gray, cols_gray = dict['color_converted'].shape[:2]
-    
-    # # combine grey and color converted image
-    # rows_comb = max(rows_rgb, rows_gray)
-    # cols_comb = cols_rgb + cols_gray
-    # comb = np.zeros(shape=(rows_comb, cols_comb, channels), dtype=np.uint8)
-
-    # comb[:rows_rgb, :cols_rgb] = dict['frame']
-    # comb[:rows_gray, cols_rgb:] = dict['color_converted'][:, :, None]
-
 
     if showStats:
         # add a strip of 30 pixels at the top of the image
@@ -354,8 +329,3 @@ def show_all_frames(dict,keysToShow=['frame','color_converted'],showStats = True
 
     # show the output image 
     cv2.imshow(windowName, comb)
-
-
-
-
-# check for keywork 'update' with hashtags in the code to fix from there 
