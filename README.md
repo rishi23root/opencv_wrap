@@ -24,6 +24,12 @@ rishi23root/opencv.wrap/
 
 # additional Utils
 
+- saveFrames
+- detectionBox
+- show_all_frames
+
+# Detection Utils
+
 - face detection
 - hand detection
 - eye detection (yet to be added)

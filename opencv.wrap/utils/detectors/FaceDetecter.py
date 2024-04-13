@@ -1,6 +1,4 @@
-from typing import overload
 import cv2
-import mediapipe as mp
 
 
 class Face:
