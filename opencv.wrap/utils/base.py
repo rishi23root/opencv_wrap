@@ -1,3 +1,6 @@
+import numpy as np
+
+
 class Singleton:
     """Singleton class using __new__ method.
     This class can be used as a base class for other classes for singleton.
@@ -13,7 +16,7 @@ class Singleton:
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             if cls.verbose:
-                print("New Singleton Instance for Class :", cls.__name__)
+                print(f"[{cls.__name__}]", "New Singleton Instance Created")
         return cls._instance
 
     @property
@@ -26,7 +29,7 @@ class Singleton:
             verbose status of the class.
         """
         if self.verbose:
-            print("Verbose Mode is ON for Class :", self.__class__.__name__)
+            print(f"[{self.__class__.__name__}]", "Verbose Mode is ON")
         return self.verbose
 
 
@@ -38,10 +41,38 @@ class Detector(Singleton):
 
     _detector = None
 
-    def __init__(self, *args, **kwargs):
-        if self.isVerbose:
-            print("genrating Detector instance", self._instance)
+    def detect(self, image: np.ndarray):
+        """process the detection in the images and \
+            return the results of the detection.
 
-        # laod the detector here
-        if not hasattr(self, "_detector"):
-            self._detector = self.__class__._detector
+        Parameters
+        ----------
+        image : np.ndarray
+            image to be detected.
+
+        Returns
+        -------
+        detection results
+        """
+        if self._detector is None:
+            raise NotImplementedError(
+                f"[{self.__class__.__name__}] Detector not implemented."
+            )
+
+        if image is None or not isinstance(image, np.ndarray):
+            raise ValueError(
+                f"[{self.__class__.__name__}] Image \
+                    not provided."
+            )
+
+        return self._detector(image)
+
+    def __enter__(self):
+        return self.__class__._instance
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        # show error in good way
+        if exc_type:
+            print(exc_type, exc_val, exc_tb)
+            return True
+        return False

@@ -33,3 +33,6 @@ rishi23root/opencv.wrap/
 - face detection
 - hand detection
 - eye detection (yet to be added)
+
+
+add code examples here for each feature and utilities 
