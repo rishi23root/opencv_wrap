@@ -37,11 +37,11 @@ class Detector(Singleton):
     """Detector class using Singleton class.
     This class can be used as a base class for other detector classes.
     handle creation and mangement of the detector instances.
-    using queue to execute the detector requests."""
+    """
 
     _detector = None
 
-    def detect(self, image: np.ndarray):
+    def detect(self, image: np.ndarray, *args, **kwargs):
         """process the detection in the images and \
             return the results of the detection.
 
@@ -65,7 +65,7 @@ class Detector(Singleton):
                     not provided."
             )
 
-        return self._detector(image)
+        return self._detector(image, *args, **kwargs)
 
     def __enter__(self):
         return self.__class__._instance
