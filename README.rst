@@ -25,9 +25,18 @@ Features
 additional Utils
 ================
 
+-  saveFrames
+-  detectionBox
+-  show_all_frames
+
+Detection Utils
+===============
+
 -  face detection
 -  hand detection
 -  eye detection (yet to be added)
+
+add code examples here for each feature and utilities
 
 .. |GitHub stars| image:: https://img.shields.io/github/stars/rishi23root/opencv.wrap.svg
    :target: https://github.com/rishi23root/opencv.wrap/stargazers

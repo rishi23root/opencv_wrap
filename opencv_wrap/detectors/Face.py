@@ -1,7 +1,7 @@
 # flake8: noqa: E501
 import cv2
-from utils.base import Detector
-from utils.util import detectionBox
+from opencv_wrap.utils import Detector
+from opencv_wrap.utils.helper import detectionBox
 
 import mediapipe as mp
 
@@ -11,14 +11,11 @@ mp_face_mesh = mp.solutions.face_mesh
 
 
 # functionalities
-# 1/ get face detection
-# 2/ get face landmarks ractangle
-# 3/ get face landmarks points
 # 4/ save faces and save them them in a folder
 # 5/ compare faces from folder and current face
 
 
-class Face(Detector):
+class FaceDetector(Detector):
 
     def __init__(
         self,
@@ -151,12 +148,28 @@ class Face(Detector):
                     connection_drawing_spec=mp_drawing_styles.get_default_face_mesh_iris_connections_style(),
                 )
 
+    def saveFaces(self, frame, face_boxes, destination="./test2"):
+        """save the detected faces in the destination folder
+
+        Parameters
+        ----------
+        frame : np.array
+            frame to save the faces from
+        face_boxes : list
+            list of face boxes (x,y,w,h)
+        destination : str, optional
+            destination to save the faces, by default "./test2"
+        """
+        for i, face_box in enumerate(face_boxes):
+            x, y, w, h = face_box
+            face = frame[y : y + h, x : x + w]
+            cv2.imwrite(f"{destination}/face_{i}.jpg", face)
 
 if __name__ == "__main__":
-    d1 = Face(verbose=True)
-    d2 = Face()
+    d1 = FaceDetector(verbose=True)
+    d2 = FaceDetector()
 
-    image = cv2.imread("./test/test.jpg")
+    image = cv2.imread("./testMedia/test.jpg")
     print(d1.detect(image))
-    print("isinstance of face :", isinstance(d1, Face), end=" ")
+    print("isinstance of face :", isinstance(d1, FaceDetector), end=" ")
     print("is i1 == i2 :", d1 == d2)

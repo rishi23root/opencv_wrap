@@ -5,7 +5,6 @@ import cv2
 import numpy as np
 import time
 
-
 def saveFrame(frame: str, count: int, destination: Path):
     """save frame to destination folder with count as name of the file
 
