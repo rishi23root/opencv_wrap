@@ -1,0 +1,16 @@
+steps to generate a new build for testing
+
+1. update the version number
+2. update readme if required 
+3. run tests if any 
+4. under 'venv' env run command - `pip freez > requirement.txt`
+5. build package `python3 setup.py sdist`
+6. to update the update to test pypi - `twine upload --repository testpypi dist/*`
+
+
+or run 
+- python3 newBuild.py
+
+and finally 
+to update to pypi production 
+- `twine upload dist/*`

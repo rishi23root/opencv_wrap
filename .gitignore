@@ -1,0 +1,6 @@
+venv
+build
+opencv_wrap.egg-info
+dist
+__pycache__
+.vscode
