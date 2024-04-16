@@ -33,8 +33,8 @@ class Singleton:
         return self.verbose
 
 
-class Detector(Singleton):
-    """Detector class using Singleton class.
+class DetectorClass(Singleton):
+    """DetectorClass class using Singleton class.
     This class can be used as a base class for other detector classes.
     handle creation and mangement of the detector instances.
     """
@@ -56,7 +56,7 @@ class Detector(Singleton):
         """
         if self._detector is None:
             raise NotImplementedError(
-                f"[{self.__class__.__name__}] Detector not implemented."
+                f"[{self.__class__.__name__}] DetectorClass not implemented."
             )
 
         if image is None or not isinstance(image, np.ndarray):

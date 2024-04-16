@@ -1,4 +1,5 @@
 import cv2
+import os
 import time
 from functools import wraps
 import traceback
@@ -225,16 +226,17 @@ class cv2Decorator:
                 try:
                     # open the webcam capture of the
                     if videoPath:
+                        # check if the path is valid
+                        if not os.path.exists(videoPath):
+                            raise Exception("Video Path is not valid")
+                        
                         cap = cv2.VideoCapture(videoPath)
                         default_fps = round(cap.get(cv2.CAP_PROP_FPS))
                         if fps < default_fps:
                             steps = round(default_fps / fps)
 
                         print(
-                            "default fps of video is :",
-                            default_fps,
-                            " moving with steps of :",
-                            steps,
+                            f"video have {default_fps=}, moving with {steps=} in {videoPath}"
                         )
 
                     else:
@@ -297,8 +299,11 @@ class cv2Decorator:
                     # print(getattr(e, 'message', str(e)))
                 finally:
                     cv2.destroyAllWindows()
-                    cap.release()
-
+                    try:
+                        cap.release()
+                    except UnboundLocalError as e:
+                        pass
+                    
                 return return_kwargs
 
             return wrapper
@@ -334,7 +339,7 @@ class cv2Decorator:
 
         return inner_wrapper
 
-    # default decorator for more (template)
+    # default decorator template to add more
     # def default_decorator(args1 = 1):
     #     def inner_wrapper(function):
     #         @wraps(function)
@@ -347,7 +352,6 @@ class cv2Decorator:
 
 # # call only one funtion to run all the basics things
 if __name__ == "__main__":
-
     @cv2Decorator.TotalTimeTaken(show=True)
     @cv2Decorator.DetectInEachFrame(
         detector=cv2.CascadeClassifier(

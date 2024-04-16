@@ -1,2 +1,3 @@
 from .Face import FaceDetector as Face
-from .Hand import handDetector as Hand
+from .Hand import HandDetector as Hand
+from .Pose import PoseDetector as Pose

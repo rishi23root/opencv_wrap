@@ -188,6 +188,8 @@ def combine_images(images, mWidth: int = 400, col: int = 2, compress=True):
     # resize all images to the same size
     if len(images) == 0:
         raise Exception("No images to show, add atleast one image to show the image")
+    
+
 
     # first check for no of col to show in a row
     eachImageWidth = (mWidth // col) - 2
@@ -206,11 +208,19 @@ def combine_images(images, mWidth: int = 400, col: int = 2, compress=True):
             and (i.shape[0] == eachImageWidth and i.shape[1] == eachImageWidth)
         ]
 
+
+    # if anycase we filterout some images we need to send no images as the output
+    if len(images) == 0:
+        return np.zeros(shape=(eachImageWidth, eachImageWidth, 3), dtype=np.uint8)
+
+    
     # add border for the images
     images = [
         cv2.copyMakeBorder(i, 1, 1, 1, 1, cv2.BORDER_CONSTANT, value=(0, 0, 0))
         for i in images
     ]
+    
+
     eachImageWidth += 2
 
     if col == 1:
@@ -218,6 +228,7 @@ def combine_images(images, mWidth: int = 400, col: int = 2, compress=True):
     else:
         # get how many elements are require to comple the grid showcase
         blankImagesToAdd = col - (len(images) % col)
+
         if blankImagesToAdd < col:
             # add blank images to the images array
             images.extend(
@@ -229,6 +240,7 @@ def combine_images(images, mWidth: int = 400, col: int = 2, compress=True):
                 ]
                 * blankImagesToAdd
             )
+
 
         return np.vstack(
             [np.hstack(images[i : i + col]) for i in range(0, len(images), col)]
@@ -305,7 +317,7 @@ def show_all_frames(
                     # print(f"key {i} is array of length",len(dict[i]))
                     # calculate the space available in the window after showing the other images
                     # accoring to that show this list of images in HORIZONTAL or VERTICAL
-                    if expectedWidth > 400:
+                    if expectedWidth > 400 and len(dict[i]) > 0:
                         showcase[i] = added_title(
                             combine_images(dict[i], mWidth=expectedWidth),
                             i,

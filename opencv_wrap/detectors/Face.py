@@ -1,21 +1,14 @@
 # flake8: noqa: E501
 import cv2
-from opencv_wrap.utils import Detector
-from opencv_wrap.utils.helper import detectionBox
-
 import mediapipe as mp
+from opencv_wrap.utils import DetectorClass
+from opencv_wrap.utils.helper import detectionBox
 
 mp_drawing = mp.solutions.drawing_utils
 mp_drawing_styles = mp.solutions.drawing_styles
 mp_face_mesh = mp.solutions.face_mesh
 
-
-# functionalities
-# 4/ save faces and save them them in a folder
-# 5/ compare faces from folder and current face
-
-
-class FaceDetector(Detector):
+class FaceDetector(DetectorClass):
 
     def __init__(
         self,
@@ -32,14 +25,7 @@ class FaceDetector(Detector):
                 min_detection_confidence=min_detection_confidence,
                 min_tracking_confidence=min_tracking_confidence,
             )
-            # detectorModule = cv2.CascadeClassifier(
-            #     cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
-            # )
-            # laod the detector here
-            # self._detector = lambda x: detectorModule.detectMultiScale(x, 1.3, 5)
-            # self._detector = self.faceDetectionModule
             self._detector = self.processFrame
-        # print(self._detector)
 
     def processFrame(self, frame):
         """process frame and extract the face features
@@ -107,6 +93,13 @@ class FaceDetector(Detector):
                 cx_max += padding_x
                 cy_max += padding_y
 
+                # check if the box is within the frame from the given coordinates
+                cx_min = max(0, cx_min)
+                cy_min = max(0, cy_min)
+                cx_max = min(w, cx_max)
+                cy_max = min(h, cy_max)
+                
+
                 face_boxes.append((cx_min, cy_min, cx_max - cx_min, cy_max - cy_min))
 
         if draw:
@@ -114,7 +107,7 @@ class FaceDetector(Detector):
 
         return face_boxes
 
-    def drawLandmarks(self, processedFrame, frame):
+    def getLandmarks(self, processedFrame, frame, draw=False):
         """draw the landmarks on the frame
 
         Parameters
@@ -123,8 +116,10 @@ class FaceDetector(Detector):
             processed frame to get the landmarks from
         frame : np.array
             frame to draw on
+        draw : bool, optional
+            draw the landmarks on the frame, by default False
         """
-        if processedFrame.multi_face_landmarks:
+        if processedFrame.multi_face_landmarks and draw:
             for face_landmarks in processedFrame.multi_face_landmarks:
                 mp_drawing.draw_landmarks(
                     image=frame,
@@ -148,22 +143,25 @@ class FaceDetector(Detector):
                     connection_drawing_spec=mp_drawing_styles.get_default_face_mesh_iris_connections_style(),
                 )
 
-    def saveFaces(self, frame, face_boxes, destination="./test2"):
-        """save the detected faces in the destination folder
+        return processedFrame.multi_face_landmarks
 
-        Parameters
-        ----------
-        frame : np.array
-            frame to save the faces from
-        face_boxes : list
-            list of face boxes (x,y,w,h)
-        destination : str, optional
-            destination to save the faces, by default "./test2"
-        """
-        for i, face_box in enumerate(face_boxes):
-            x, y, w, h = face_box
-            face = frame[y : y + h, x : x + w]
-            cv2.imwrite(f"{destination}/face_{i}.jpg", face)
+    # def compareFaceLandmarks(self, currrentLandmarks, targetLandmarksList: dict):
+    #     """compare current landmark from target landmarks and return the matched face key else None
+
+    #     Parameters
+    #     ----------
+    #     currrentLandmarks : face_landmarks
+    #         468 landmarks of the current face
+    #     targetLandmarksList : dict
+    #         dict of target landmarks with key as face key and value as landmarks
+
+    #     Returns
+    #     -------
+    #     str
+    #         matched face key else None
+    #     """
+        
+    #     pass
 
 if __name__ == "__main__":
     d1 = FaceDetector(verbose=True)

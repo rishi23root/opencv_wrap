@@ -70,5 +70,5 @@ os.system(f"python3 setup.py sdist")
 
 # upload to test pypi using twine
 print("[info]", "uploading to test pypi")
-# os.system(f'twine upload --repository testpypi dist/{FOLDER_NAME}-{NEW_VERSION}.tar.gz')
-os.system(f"twine upload  dist/{FOLDER_NAME}-{NEW_VERSION}.tar.gz")
+os.system(f'twine upload --repository testpypi dist/{FOLDER_NAME}-{NEW_VERSION}.tar.gz')
+# os.system(f"twine upload dist/{FOLDER_NAME}-{NEW_VERSION}.tar.gz --verbose")
