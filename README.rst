@@ -1,13 +1,20 @@
 opencv_wrap
 ===========
 
-::
+A collection of decorators for opencv and helper functions for multiple
+opencv tasks.
 
-   A collection of decorators for opencv and helper functions for multiple opencv tasks.
+Working with opencv can be quite a hussel, a lot of boiler code, nested
+functions for specific use cases, this package is designed to make it
+easier to work with opencv, while focusing on the main task in hand.
+best for prototyping and quick testing. second part is speed and
+performance, this package is designed to be fast and efficient.
 
-Built with ❤︎ and ☕ by [@rishi23root](https://github.com/rishi23root/)
+--------------
 
-rishi23root/opencv_wrap/
+Built with ☕ by [@rishi23root](https://github.com/rishi23root/)
+
+`rishi23root/opencv_wrap/ <https://github.com/rishi23root/opencv_wrap/>`__
 
 |GitHub stars| |PyPI| |GitHub| |PyPI - Python Version| |Say Thanks!|
 
@@ -18,8 +25,10 @@ Installation
 
    pip install opencv-wrap
 
-Very basic example of reading camera feed and displaying it. with just 5 lines of code. 😎
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..
+
+   **Very basic example of reading camera feed and displaying it. with
+   just 5 lines of code. 😎**
 
 .. code:: python
 
@@ -33,8 +42,10 @@ Very basic example of reading camera feed and displaying it. with just 5 lines o
 
    all_actions()
 
-Advance example of face detection and smart viewer. with just 23 lines of code. 😊
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..
+
+   **Advance example of face detection and smart viewer. with just 23
+   lines of code. 😊**
 
 .. code:: python
 
@@ -61,6 +72,11 @@ Advance example of face detection and smart viewer. with just 23 lines of code. 
        return kwargs
 
    all_actions()
+
+.. figure:: https://rishi23root.github.io/opencv_wrap/static/Screenshot%20from%202024-04-16%2005-21-50.png
+   :alt: image
+
+   image
 
 --------------
 
@@ -118,8 +134,9 @@ Detection Classes
 -  Pose detection
 -  eye detection (yet to be added)
 
-you can reconstruct the ``detector`` classes as per your need. 😊
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..
+
+   you can reconstruct the ``detector`` classes as per your need. 😊
 
 like extend the class and add more functions to it. like action of
 certain detections.
@@ -153,6 +170,11 @@ certain detections.
        return kwargs
 
    all_actions()
+
+.. figure:: https://rishi23root.github.io/opencv_wrap/static/Screenshot%20from%202024-04-16%2006-06-26.png
+   :alt: image
+
+   image
 
 --------------
 
@@ -273,6 +295,13 @@ More Usage Examples
 
    all_actions()
 
+.. figure:: https://rishi23root.github.io/opencv_wrap/static/Screenshot-20240416071523-780x68.png
+   :alt: image
+
+   image
+
+..
+
    **Example 5** : Reading video and show converted frame in smart view
 
 .. code:: python
@@ -288,7 +317,8 @@ More Usage Examples
 
    all_actions()
 
---------------
+|image|
+-------
 
 Future Updates
 ==============
@@ -309,3 +339,4 @@ Future Updates
 .. |PyPI - Python Version| image:: https://img.shields.io/pypi/pyversions/Django.svg
 .. |Say Thanks!| image:: https://img.shields.io/badge/Say%20Thanks-:D-1EAEDB.svg
    :target: https://saythanks.io/to/rishi23root
+.. |image| image:: https://rishi23root.github.io/opencv_wrap/static/Screenshot-20240416071956-1175x661.png

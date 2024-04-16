@@ -8,7 +8,7 @@ Working with opencv can be quite a hussel, a lot of boiler code, nested function
 
 Built with ☕ by [@rishi23root](https://github.com/rishi23root/)
 
-rishi23root/opencv_wrap/
+[rishi23root/opencv_wrap/](https://github.com/rishi23root/opencv_wrap/)
 
 [![GitHub stars](https://img.shields.io/github/stars/rishi23root/opencv_wrap.svg)](https://github.com/rishi23root/opencv_wrap/stargazers)
 [![PyPI](https://img.shields.io/pypi/v/opencv_wrap.svg)](https://pypi.org/project/opencv_wrap/)
@@ -20,7 +20,7 @@ rishi23root/opencv_wrap/
 pip install opencv-wrap
 ```
 
-#### Very basic example of reading camera feed and displaying it. with just 5 lines of code. 😎
+> **Very basic example of reading camera feed and displaying it. with just 5 lines of code. 😎**
 
 ```python
 from opencv_wrap import cv2Decorator
@@ -34,7 +34,7 @@ def all_actions(**kwargs):
 all_actions()
 ```
 
-#### Advance example of face detection and smart viewer. with just 23 lines of code. 😊
+> **Advance example of face detection and smart viewer. with just 23 lines of code. 😊**
 
 ```python
 from opencv_wrap import cv2Decorator
@@ -62,7 +62,7 @@ def all_actions(**kwargs):
 all_actions()
 ```
 
-<img src='./static/Screenshot%20from%202024-04-16%2005-21-50.png' >
+![image](https://rishi23root.github.io/opencv_wrap/static/Screenshot%20from%202024-04-16%2005-21-50.png)
 
 ---
 
@@ -114,7 +114,7 @@ from opencv_wrap.detectors import Face , Hand, Pose
 - Pose detection
 - eye detection (yet to be added)
 
-#### you can reconstruct the `detector` classes as per your need. 😊
+> you can reconstruct the `detector` classes as per your need. 😊
 
 like extend the class and add more functions to it. like action of certain detections.
 
@@ -147,7 +147,7 @@ def all_actions(\*\*kwargs):
 all_actions()
 ```
 
-<img src='./static/Screenshot from 2024-04-16 06-06-26.png'>
+![image](https://rishi23root.github.io/opencv_wrap/static/Screenshot%20from%202024-04-16%2006-06-26.png)
 
 ---
 
@@ -259,7 +259,7 @@ def all_actions(**kwargs):
 all_actions()
 ```
 
-<img src='./static/Screenshot-20240416071523-780x68.png'>
+![image](https://rishi23root.github.io/opencv_wrap/static/Screenshot-20240416071523-780x68.png)
 
 > **Example 5** : Reading video and show converted frame in smart view
 
@@ -276,8 +276,7 @@ def all_actions(**kwargs):
 all_actions()
 ```
 
-<img src='./static/Screenshot-20240416071956-1175x661.png'>
-
+![image](https://rishi23root.github.io/opencv_wrap/static/Screenshot-20240416071956-1175x661.png)
 ---
 
 # Future Updates
