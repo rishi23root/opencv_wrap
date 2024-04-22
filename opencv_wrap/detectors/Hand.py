@@ -1,3 +1,4 @@
+# flake8: noqa: E501
 import mediapipe as mp
 from opencv_wrap.utils import DetectorClass
 from opencv_wrap.utils.helper import detectionBox
@@ -11,7 +12,7 @@ class HandDetector(DetectorClass):
 
     def __init__(
         self,
-        max_num_hands=2,
+        max_num_hands=10,
         min_detection_confidence=0.5,
         min_tracking_confidence=0.5,
         verbose=False,
@@ -38,14 +39,13 @@ class HandDetector(DetectorClass):
             output of hands.process function
         """
         return self.hands.process(frame)
-    
 
     def getDetectionBox(self, processedFrame, frame, padding_ratio=0.2, draw=False):
         """return the detected box from the processed frame, here face
 
         Parameters
         ----------
-        processedFrame : 
+        processedFrame :
             output of processFrame function
         frame : np.array
             frame to draw the box on
@@ -92,7 +92,6 @@ class HandDetector(DetectorClass):
                 cy_min = max(0, cy_min)
                 cx_max = min(w, cx_max)
                 cy_max = min(h, cy_max)
-                
 
                 hand_boxes.append((cx_min, cy_min, cx_max - cx_min, cy_max - cy_min))
 
@@ -106,7 +105,7 @@ class HandDetector(DetectorClass):
 
         Parameters
         ----------
-        processedFrame : 
+        processedFrame :
             output of processFrame function
         frame : np.array
             frame to draw the landmarks on
@@ -120,12 +119,12 @@ class HandDetector(DetectorClass):
         """
         if processedFrame.multi_hand_landmarks and draw:
             for hand_landmarks in processedFrame.multi_hand_landmarks:
-                    mp_drawing.draw_landmarks(
-                        frame,
-                        hand_landmarks,
-                        mp_hands.HAND_CONNECTIONS)
+                mp_drawing.draw_landmarks(
+                    frame, hand_landmarks, mp_hands.HAND_CONNECTIONS
+                )
 
         return processedFrame.multi_hand_landmarks
+
 
 if __name__ == "__main__":
     HandDetector()

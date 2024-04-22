@@ -216,6 +216,8 @@ def all_actions(**kwargs):
 kwargs = all_actions()
 ```
 
+![image](https://rishi23root.github.io/opencv_wrap/static/Screenshot-20240422075128-1152x666.png)
+
 > **Example 3** : Reading video and detecting Pose in each frame
 
 ```python
@@ -244,6 +246,8 @@ def all_actions(**kwargs):
 
 all_actions()
 ```
+
+![image](https://rishi23root.github.io/opencv_wrap/static/Screenshot%20from%202024-04-22%2007-42-13.png)
 
 > **Example 4** : Reading video and saving each frame in a folder
 
@@ -276,8 +280,7 @@ def all_actions(**kwargs):
 all_actions()
 ```
 
-![image](https://rishi23root.github.io/opencv_wrap/static/Screenshot-20240416071956-1175x661.png)
----
+## ![image](https://rishi23root.github.io/opencv_wrap/static/Screenshot-20240416071956-1175x661.png)
 
 # Future Updates
 

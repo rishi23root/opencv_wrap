@@ -248,6 +248,11 @@ More Usage Examples
 
    kwargs = all_actions()
 
+.. figure:: https://rishi23root.github.io/opencv_wrap/static/Screenshot-20240422075128-1152x666.png
+   :alt: image
+
+   image
+
 ..
 
    **Example 3** : Reading video and detecting Pose in each frame
@@ -278,6 +283,11 @@ More Usage Examples
 
 
    all_actions()
+
+.. figure:: https://rishi23root.github.io/opencv_wrap/static/Screenshot%20from%202024-04-22%2007-42-13.png
+   :alt: image
+
+   image
 
 ..
 

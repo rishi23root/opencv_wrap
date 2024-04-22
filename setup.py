@@ -1,7 +1,7 @@
 # flake8: noqa: E501
 from setuptools import setup, find_packages
 
-VERSION = "0.1.1"
+VERSION = "0.1.2"
 DESCRIPTION = "Working with opencv can be quite a hussel, a lot of boiler code, nested functions for specific use cases, this package is designed to make it easier to work with opencv, while focusing on the main task in hand. best for prototyping and quick testing. second part is speed and performance, this package is designed to be fast and efficient."
 
 setup(
