@@ -1,3 +1,5 @@
+# flake8: noqa: E501
+
 import mediapipe as mp
 from opencv_wrap.utils import DetectorClass
 from opencv_wrap.utils.helper import detectionBox
@@ -7,7 +9,11 @@ mp_drawing_styles = mp.solutions.drawing_styles
 mp_pose = mp.solutions.pose
 
 
-# have to test with multiple people in the frame
+# tested with multiple people in the frame, not working
+# 1. use yolo to detect the person in the frame
+# 2. crop the person from the frame
+# 3. use pose detection on the cropped frame
+
 
 class PoseDetector(DetectorClass):
 
@@ -38,13 +44,13 @@ class PoseDetector(DetectorClass):
             output of pose.process function
         """
         return self.pose.process(frame)
-    
+
     def getDetectionBox(self, processedFrame, frame, padding_ratio=0.2, draw=False):
         """return the detected box from the processed frame, here pose
 
         Parameters
         ----------
-        processedFrame : 
+        processedFrame :
             output of processFrame function
         frame : np.array
             frame to draw the box on
@@ -95,11 +101,9 @@ class PoseDetector(DetectorClass):
 
             pose_box.append((cx_min, cy_min, cx_max - cx_min, cy_max - cy_min))
 
-
-            
         if draw:
             detectionBox(detectedArr=pose_box, frame=frame)
-        
+
         return pose_box
 
     def getLandmarks(self, processedFrame, frame, draw=False):
@@ -107,7 +111,7 @@ class PoseDetector(DetectorClass):
 
         Parameters
         ----------
-        processedFrame : 
+        processedFrame :
             output of processFrame function
         frame : np.array
             frame to draw the landmarks on
@@ -124,10 +128,11 @@ class PoseDetector(DetectorClass):
             frame,
             processedFrame.pose_landmarks,
             mp_pose.POSE_CONNECTIONS,
-            landmark_drawing_spec=mp_drawing_styles.get_default_pose_landmarks_style()
+            landmark_drawing_spec=mp_drawing_styles.get_default_pose_landmarks_style(),
         )
 
         return processedFrame.pose_landmarks
+
 
 if __name__ == "__main__":
     PoseDetector()
